@@ -1,14 +1,8 @@
 # Grid Monitor API
 
-[![CI](https://img.shields.io/github/actions/workflow/status/jismailov/monitor-api/ci.yml?branch=main&label=ci)](https://github.com/jismailov/monitor-api/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688.svg)](https://fastapi.tiangolo.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791.svg)](https://www.postgresql.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+A lil pet project for grid monitoring simulation.
 
-Small, clean pet project for grid monitoring simulation.
-
-It includes:
+Includes:
 - FastAPI backend with PostgreSQL storage
 - Alembic migrations
 - Two producer services that generate synthetic readings:
@@ -123,7 +117,3 @@ Example response:
 - Incident rules are implemented in `app/services/monitoring.py`.
 - Alembic reads `DATABASE_URL` from `.env` in `migrations/env.py`.
 - Sensors can fail briefly at startup before the API is fully ready; this is expected in local compose boot.
-
-## License
-
-MIT - see [LICENSE](LICENSE).
