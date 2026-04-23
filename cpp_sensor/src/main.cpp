@@ -7,9 +7,11 @@
 #include <string>
 #include <thread>
 
+using namespace std;
+
 int envToInt(const char *name, int fallback)
 {
-    const char *value = std::getenv(name);
+    const char *value = getenv(name);
     if (value == nullptr)
     {
         return fallback;
@@ -17,7 +19,7 @@ int envToInt(const char *name, int fallback)
 
     try
     {
-        return std::stoi(value);
+        return stoi(value);
     }
     catch (...)
     {
@@ -25,17 +27,17 @@ int envToInt(const char *name, int fallback)
     }
 }
 
-std::string envToString(const char *name, const std::string &fallback)
+string envToString(const char *name, const string &fallback)
 {
-    const char *value = std::getenv(name);
+    const char *value = getenv(name);
     if (value == nullptr)
     {
         return fallback;
     }
-    return std::string(value);
+    return string(value);
 }
 
-bool postReading(CURL *curl, const std::string &url, const std::string &payload)
+bool postReading(CURL *curl, const string &url, const string &payload)
 {
     struct curl_slist *headers = nullptr;
     headers = curl_slist_append(headers, "Content-Type: application/json");
@@ -55,13 +57,13 @@ bool postReading(CURL *curl, const std::string &url, const std::string &payload)
 
     if (result != CURLE_OK)
     {
-        std::cerr << "cpp_sensor request failed: " << curl_easy_strerror(result) << std::endl;
+        cerr << "cpp_sensor request failed: " << curl_easy_strerror(result) << endl;
         return false;
     }
 
     if (responseCode < 200 || responseCode >= 300)
     {
-        std::cerr << "cpp_sensor server returned status " << responseCode << std::endl;
+        cerr << "cpp_sensor server returned status " << responseCode << endl;
         return false;
     }
 
@@ -70,44 +72,44 @@ bool postReading(CURL *curl, const std::string &url, const std::string &payload)
 
 int main()
 {
-    std::string apiBase = envToString("API_BASE_URL", "http://api:8000");
+    string apiBase = envToString("API_BASE_URL", "http://api:8000");
     int nodeId = envToInt("SENSOR_NODE_ID", 1);
     int intervalSeconds = envToInt("SEND_INTERVAL_SECONDS", 8);
-    std::string readingsUrl = apiBase + "/readings/";
+    string readingsUrl = apiBase + "/readings/";
 
-    std::mt19937 rng(std::random_device{}());
-    std::uniform_real_distribution<double> voltageDist(98.0, 235.0);
-    std::uniform_real_distribution<double> loadDist(120.0, 820.0);
+    mt19937 rng(random_device{}());
+    uniform_real_distribution<double> voltageDist(98.0, 235.0);
+    uniform_real_distribution<double> loadDist(120.0, 820.0);
 
     curl_global_init(CURL_GLOBAL_DEFAULT);
     CURL *curl = curl_easy_init();
     if (curl == nullptr)
     {
-        std::cerr << "cpp_sensor failed to initialize curl" << std::endl;
+        cerr << "cpp_sensor failed to initialize curl" << endl;
         return 1;
     }
 
-    std::cout << "cpp_sensor started. Sending readings to " << readingsUrl << std::endl;
+    cout << "cpp_sensor started. Sending readings to " << readingsUrl << endl;
 
     while (true)
     {
-        double voltage = std::round(voltageDist(rng) * 100.0) / 100.0;
-        double load = std::round(loadDist(rng) * 100.0) / 100.0;
+        double voltage = round(voltageDist(rng) * 100.0) / 100.0;
+        double load = round(loadDist(rng) * 100.0) / 100.0;
 
-        // We keep this payload hand-written so it is obvious how each field maps to the API schema.
-        std::string payload =
-            "{\"node_id\":" + std::to_string(nodeId) +
-            ",\"voltage\":" + std::to_string(voltage) +
+        // handwritten payload so it's obvious how each field maps to the API schema
+        string payload =
+            "{\"node_id\":" + to_string(nodeId) +
+            ",\"voltage\":" + to_string(voltage) +
             ",\"load\":" + std::to_string(load) + "}";
 
         if (postReading(curl, readingsUrl, payload))
         {
-            std::cout << "cpp_sensor sent reading node=" << nodeId
-                      << " voltage=" << voltage
-                      << " load=" << load << std::endl;
+            cout << "cpp_sensor sent reading node=" << nodeId
+                 << " voltage=" << voltage
+                 << " load=" << load << endl;
         }
 
-        std::this_thread::sleep_for(std::chrono::seconds(intervalSeconds));
+        this_thread::sleep_for(chrono::seconds(intervalSeconds));
     }
 
     curl_easy_cleanup(curl);

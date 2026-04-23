@@ -9,8 +9,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class SensorClient {
     private static final HttpClient HTTP = HttpClient.newBuilder()
-        .connectTimeout(Duration.ofSeconds(5))
-        .build();
+            .connectTimeout(Duration.ofSeconds(5))
+            .build();
 
     private static int envInt(String name, int fallback) {
         String raw = System.getenv(name);
@@ -40,20 +40,19 @@ public class SensorClient {
     private static String readingJson(int nodeId, double voltage, double load) {
         // for predictable decimal points
         return String.format(Locale.US,
-            "{\"node_id\":%d,\"voltage\":%.2f,\"load\":%.2f}",
-            nodeId,
-            voltage,
-            load
-        );
+                "{\"node_id\":%d,\"voltage\":%.2f,\"load\":%.2f}",
+                nodeId,
+                voltage,
+                load);
     }
 
     private static void sendReading(String readingsUrl, String payload) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(readingsUrl))
-            .timeout(Duration.ofSeconds(10))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(payload))
-            .build();
+                .uri(URI.create(readingsUrl))
+                .timeout(Duration.ofSeconds(10))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(payload))
+                .build();
 
         HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
@@ -67,7 +66,7 @@ public class SensorClient {
         int intervalSeconds = envInt("SEND_INTERVAL_SECONDS", 10);
         String readingsUrl = baseUrl + "/readings/";
 
-        System.out.println("java_sensor started. Sending readings to " + readingsUrl);
+        System.out.println("java_sensor started! Sending readings to " + readingsUrl);
 
         while (true) {
             double voltage = randomBetween(100.0, 240.0);
@@ -78,7 +77,8 @@ public class SensorClient {
                 sendReading(readingsUrl, payload);
                 System.out.println("java_sensor sent reading " + payload);
             } catch (Exception ex) {
-                // log and continue so one transient network error doesn't permanently kill the service container
+                // log and continue so one transient network error doesn't permanently kill the
+                // service container
                 System.err.println("java_sensor failed to send reading: " + ex.getMessage());
             }
 

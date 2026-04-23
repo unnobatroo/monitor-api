@@ -1,13 +1,10 @@
 # Grid Monitor API
 
-A lil pet project for grid monitoring simulation.
-
-Includes:
 - FastAPI backend with PostgreSQL storage
 - Alembic migrations
 - Two producer services that generate synthetic readings:
-  - C++ sensor (`cpp_sensor`)
-  - Java sensor (`java_sensor`)
+  - [C++ sensor](cpp_sensor/src/main.cpp)
+  - [Java sensor](java_sensor/src/SensorClient.java)
 
 ## Architecture
 
@@ -19,56 +16,17 @@ flowchart LR
     U[Client / curl] -->|GET /, POST /nodes| A
 ```
 
-## Project tree
+### Smoke test
 
-```text
-├── .github/workflows/    # CI pipeline
-├── app/                  # API code (routes, models, services, db)
-├── migrations/           # Alembic setup + migration versions
-├── cpp_sensor/           # C++ sensor service
-│   └── src/main.cpp
-├── java_sensor/          # Java sensor service
-│   └── src/SensorClient.java
-├── docker-compose.yml    # Multi-service local stack
-├── Dockerfile            # API image
-├── requirements.txt      # Python dependencies
-├── .env.example          # Environment template
-└── LICENSE
-```
+Run the full local check without setting anything up manually:
 
-## Quick start
-
-1. Create local env file:
+Docker must be running first.
 
 ```bash
-cp .env.example .env
+bash scripts/smoke-test.sh
 ```
 
-2. Build and start everything:
-
-```bash
-docker compose up --build -d
-```
-
-3. Create a node used by sensors (`node_id=1`):
-
-```bash
-curl -X POST http://localhost:8000/nodes/ \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Node 1","location":"Lab"}'
-```
-
-4. Verify API:
-
-```bash
-curl http://localhost:8000/
-```
-
-5. Tail logs:
-
-```bash
-docker compose logs -f api cpp_sensor java_sensor
-```
+The script creates `.env` from `.env.example` if needed, starts the database and API, exercises the node and reading endpoints, verifies the monitoring incidents in PostgreSQL, and builds the sensor images.
 
 ## API examples
 
@@ -77,9 +35,6 @@ docker compose logs -f api cpp_sensor java_sensor
 ```bash
 curl -s http://localhost:8000/
 ```
-
-Example response:
-
 ```json
 {"message":"online!"}
 ```
@@ -91,11 +46,12 @@ curl -s -X POST http://localhost:8000/nodes/ \
   -H "Content-Type: application/json" \
   -d '{"name":"Node 1","location":"Lab"}'
 ```
-
-Example response:
-
 ```json
-{"name":"Node 1","location":"Lab","id":1}
+{
+  "name": "Node 1",
+  "location": "Lab",
+  "id": 1
+}
 ```
 
 ### `POST /readings/`
@@ -105,14 +61,51 @@ curl -s -X POST http://localhost:8000/readings/ \
   -H "Content-Type: application/json" \
   -d '{"node_id":1,"voltage":220.4,"load":410.2}'
 ```
-
-Example response:
-
 ```json
-{"node_id":1,"voltage":220.4,"load":410.2,"id":12,"timestamp":"2026-04-19T13:30:00.000000Z"}
+{
+  "node_id": 1,
+  "voltage": 220.4,
+  "load": 410.2,
+  "id": 12,
+  "timestamp": "2026-04-19T13:30:00.000000Z"
+}
 ```
 
-## Development notes
+## Setting up
+
+1. Create a local env file.
+
+```bash
+cp .env.example .env
+```
+
+2. Build and start everything.
+
+```bash
+docker compose up --build -d
+```
+
+3. Create a node used by sensors (`node_id=1`).
+
+```bash
+curl -X POST http://localhost:8000/nodes/ \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Node 1","location":"Lab"}'
+```
+
+4. Verify the API.
+
+```bash
+curl http://localhost:8000/
+```
+
+5. Tail logs.
+
+```bash
+docker compose logs -f api cpp_sensor java_sensor
+```
+
+## Notes
 
 - Incident rules are implemented in `app/services/monitoring.py`.
 - Alembic reads `DATABASE_URL` from `.env` in `migrations/env.py`.
